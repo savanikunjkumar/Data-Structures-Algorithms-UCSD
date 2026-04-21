@@ -10,7 +10,7 @@ All programming assignments and algorithmic challenges have been implemented and
 * **Focus:** Competitive Programming, Algorithm Optimization, Data Structures
 
 ## 📚 Course Modules Included
-*(You can update these as you progress through the course)*
+
 * Course 1: Algorithmic Toolbox
 * Course 2: Data Structures
 * Course 3: Algorithms on Graphs
