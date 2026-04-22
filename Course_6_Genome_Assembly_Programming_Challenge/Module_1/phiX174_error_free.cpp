@@ -12,101 +12,123 @@
  * Time Complexity: O(N^2 * L) where N=1618, L=100.
  */
 
+
+   
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include <algorithm>
 
 using namespace std;
 
-// Structure to store the result of an overlap check
-struct OverlapResult {
-    int length;
-    int mismatches;
+/**
+ * Problem: Assembling phi X174 Genome from Error-Free Reads
+ * Strategy: Overlap Graph with Greedy Hamiltonian Path
+ * Optimization: Prefix Hash Map for O(1) overlap discovery.
+ */
 
-    bool is_better_than(const OverlapResult& other) const {
-        if (length != other.length) return length > other.length;
-        return mismatches < other.mismatches;
-    }
-};
-
-// Computes the best overlap satisfying the 5% error threshold
-OverlapResult get_overlap(const string& a, const string& b, int min_overlap = 15) {
-    int n = a.length();
-    // Try overlaps from 99 down to min_overlap
-    for (int len = n - 1; len >= min_overlap; --len) {
-        int mismatches = 0;
-        for (int i = 0; i < len; ++i) {
-            if (a[n - len + i] != b[i]) {
-                mismatches++;
-            }
-        }
-        // Check if mismatches are within 5% of overlap length
-        if (mismatches <= len * 0.05) {
-            return {len, mismatches};
+// Finds the maximum exact overlap between suffix of s1 and prefix of s2
+int get_perfect_overlap(const string& s1, const string& s2) {
+    int n = s1.length();
+    // Start from the longest possible overlap (n-1) down to 1
+    for (int len = n - 1; len >= 1; --len) {
+        if (s1.substr(n - len) == s2.substr(0, len)) {
+            return len;
         }
     }
-    return {0, 1000};
+    return 0;
 }
 
-string assemble(vector<string>& reads) {
+string assemble_genome(vector<string>& reads) {
     int n = reads.size();
-    vector<bool> visited(n, false);
-    vector<int> path;
+    vector<bool> used(n, false);
     
+    // Step 1: Index reads by their prefixes for faster lookup
+    // Key: Prefix string, Value: Index of the read in the 'reads' vector
+    unordered_map<string, vector<int>> prefix_map;
+    for (int i = 0; i < n; ++i) {
+        // We index the first 12 characters as a k-mer filter
+        prefix_map[reads[i].substr(0, 12)].push_back(i);
+    }
+
     int curr = 0;
-    visited[curr] = true;
-    path.push_back(curr);
+    used[curr] = true;
     string genome = reads[curr];
+    int assembled_count = 1;
 
-    for (int i = 1; i < n; ++i) {
-        OverlapResult best_overlap = {-1, 1000};
-        int next_read = -1;
+    while (assembled_count < n) {
+        int best_next = -1;
+        int max_overlap = -1;
 
-        for (int j = 0; j < n; ++j) {
-            if (visited[j]) continue;
+        // Step 2: Search for the best overlap starting from the longest possible
+        // We look at the suffix of the current read
+        string current_read = reads[curr];
+        int l = current_read.length();
 
-            OverlapResult res = get_overlap(reads[curr], reads[j]);
-            if (res.length > 0 && res.is_better_than(best_overlap)) {
-                best_overlap = res;
-                next_read = j;
+        // Instead of checking all N reads, we only check those that 
+        // share a 12-mer with our current suffix.
+        for (int len = l - 1; len >= 12; --len) {
+            string suffix = current_read.substr(l - len);
+            string kmer = suffix.substr(0, 12);
+
+            if (prefix_map.count(kmer)) {
+                for (int neighbor_idx : prefix_map[kmer]) {
+                    if (!used[neighbor_idx]) {
+                        // Check if the full overlap matches perfectly
+                        if (reads[neighbor_idx].substr(0, len) == suffix) {
+                            max_overlap = len;
+                            best_next = neighbor_idx;
+                            break;
+                        }
+                    }
+                }
             }
+            if (best_next != -1) break;
         }
 
-        if (next_read != -1) {
-            genome += reads[next_read].substr(best_overlap.length);
-            visited[next_read] = true;
-            curr = next_read;
-            path.push_back(next_read);
+        if (best_next != -1) {
+            genome += reads[best_next].substr(max_overlap);
+            used[best_next] = true;
+            curr = best_next;
+            assembled_count++;
+        } else {
+            // Fallback: If no overlap >= 12 found (unlikely in this dataset)
+            break; 
         }
     }
 
-    // Circularity: Overlap the last read with the first read
-    OverlapResult circular = get_overlap(reads[curr], reads[path[0]]);
-    if (circular.length > 0) {
-        genome = genome.substr(0, genome.length() - circular.length);
+    // Step 3: Handle circularity by removing the overlap between last and first read
+    int circular_overlap = get_perfect_overlap(reads[curr], reads[0]);
+    if (circular_overlap > 0) {
+        genome = genome.substr(0, genome.length() - circular_overlap);
     }
 
     return genome;
 }
 
 int main() {
-    // Fast I/O is standard practice for VIT/GATE level coding
+    // Speed up I/O for large datasets
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
     vector<string> reads;
     string r;
     while (cin >> r) {
-        // Only keep unique reads to speed up the O(N^2) process
-        if (find(reads.begin(), reads.end(), r) == reads.end()) {
-            reads.push_back(r);
+        // Only add unique reads
+        bool duplicate = false;
+        for(const auto& existing : reads) {
+            if(existing == r) {
+                duplicate = true;
+                break;
+            }
         }
+        if(!duplicate) reads.push_back(r);
     }
 
     if (reads.empty()) return 0;
 
-    cout << assemble(reads) << endl;
+    cout << assemble_genome(reads) << endl;
 
     return 0;
 }
