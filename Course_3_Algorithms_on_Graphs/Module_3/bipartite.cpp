@@ -1,4 +1,9 @@
 /*
+ * Author: Kunjkumar Savani
+ * Course: Algorithms on Graphs by UC San Diego (Course 3)
+ * Module: Module 3 - Paths in Graph 1
+ * Assignment: Checking if a Graph is Bipartite
+ *
  * Logic: BFS Graph 2-Coloring
  * We attempt to color the graph using two colors (0 and 1) via BFS.
  * If we ever find an edge connecting two nodes of the same color, 
