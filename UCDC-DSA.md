@@ -13,6 +13,7 @@ This repository houses my highly optimized, competitive-programming-grade **C++ 
 ## 👨‍💻 Author & Credentials
 
 * **Author:** Kunjkumar Savani
+* **Email:** savani.kunjkumr@gmail.com
 * **LinkedIn:** https://www.linkedin.com/in/kunj-savani-08a38937a/
 * **ORCID:** https://orcid.org/0009-0005-1863-6757
 * **Official Specialization Certificate:** https://coursera.org/verify/specialization/7P3FXODKCGFQ
